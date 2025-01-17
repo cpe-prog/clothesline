@@ -43,6 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isAuto = false; // Automatic clothesline state
   bool isServo180 = false; // Servo state for "Expose Clothesline"
   bool isServo0 = false; // Servo state for "Retract Clothesline"
+  bool? isRaining = false;
 
   @override
   void initState() {
@@ -90,8 +91,11 @@ class _MyHomePageState extends State<MyHomePage> {
   void listenToRainStatus() {
     _database.child('Rain').onValue.listen((event) {
       final rainStatus = event.snapshot.value as bool?;
+      setState(() {
+        isRaining = rainStatus;
+      });
+
       if (rainStatus == true) {
-        // Show notification if 'rain' is true
         showNotification('It\'s Raining!', 'Please retract your clothesline.');
       }
     });
@@ -104,20 +108,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    const double buttonWidth = 220;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Left-Aligned Title
             Text(
               widget.title,
               style: const TextStyle(color: Colors.black87),
             ),
-
-            // Right-Aligned Dropdown
             DropdownButton<String>(
               value: mode,
               dropdownColor: Colors.blue,
@@ -164,97 +164,64 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 50),
 
             // Expose Clothesline Button
-            Container(
-                margin: const EdgeInsets.only(top: 20),
-                child: SizedBox(
-                  width: buttonWidth,
-                  child: ElevatedButton.icon(
-                    onPressed: mode == "Manual"
-                        ? () {
-                            setState(() {
-                              isServo180 = true;
-                              isServo0 = false; // Reset the other button
-                            });
-                            sendToFirebase("Servo", 180);
-                          }
-                        : null,
-                    icon: const Icon(
-                      Icons.wb_sunny,
-                      color: Colors.white,
-                    ), // Sun icon
-                    label: const Text(
-                      "Expose Clothesline",
-                      style: TextStyle(
-                        color: Colors.black87,
-                      ), // Dark gray text
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isServo180
-                          ? Colors.greenAccent
-                          : const Color.fromARGB(255, 0, 217, 255),
-                    ),
-                  ),
-                )),
+            buildButton(
+              "Expose Clothesline",
+              Icons.wb_sunny,
+              isServo180,
+              () {
+                setState(() {
+                  isServo180 = true;
+                  isServo0 = false; // Reset the other button
+                });
+                sendToFirebase("Servo", 180);
+              },
+              mode == "Manual",
+            ),
 
             // Retract Clothesline Button
-            Container(
-                margin: const EdgeInsets.only(top: 20),
-                child: SizedBox(
-                  width: buttonWidth,
-                  child: ElevatedButton.icon(
-                    onPressed: mode == "Manual"
-                        ? () {
-                            setState(() {
-                              isServo0 = true;
-                              isServo180 = false; // Reset the other button
-                            });
-                            sendToFirebase("Servo", 0);
-                          }
-                        : null,
-                    icon: const Icon(
-                      Icons.cloud,
-                      color: Colors.white,
-                    ), // Cloud icon
-                    label: const Text(
-                      "Retract Clothesline",
-                      style: TextStyle(color: Colors.black87), // Dark gray text
-                    ),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: isServo0
-                            ? Colors.greenAccent
-                            : const Color.fromARGB(255, 0, 217, 255)),
-                  ),
-                )),
+            buildButton(
+              "Retract Clothesline",
+              Icons.cloud,
+              isServo0,
+              () {
+                setState(() {
+                  isServo0 = true;
+                  isServo180 = false; // Reset the other button
+                });
+                sendToFirebase("Servo", 0);
+              },
+              mode == "Manual",
+            ),
 
             // Automatic Clothesline Button
-            Container(
-                margin: const EdgeInsets.only(top: 50),
-                child: SizedBox(
-                  width: buttonWidth,
-                  child: ElevatedButton.icon(
-                    onPressed: mode == "Automatic"
-                        ? () {
-                            setState(() {
-                              isAuto = !isAuto;
-                            });
-                            sendToFirebase("Auto", isAuto ? 1 : 0);
-                          }
-                        : null,
-                    icon: const Icon(
-                      Icons.build,
-                      color: Colors.white,
-                    ), // Tools icon
-                    label: const Text(
-                      "Automatic Clothesline",
-                      style: TextStyle(color: Colors.black87), // Dark gray text
-                    ),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: isAuto
-                            ? Colors.greenAccent
-                            : const Color.fromARGB(255, 0, 217, 255)),
-                  ),
-                )),
-            const SizedBox(height: 150),
+            buildButton(
+              "Automatic Clothesline",
+              Icons.build,
+              isAuto,
+              () {
+                setState(() {
+                  isAuto = !isAuto;
+                });
+                sendToFirebase("Auto", isAuto ? 1 : 0);
+              },
+              mode == "Automatic",
+            ),
+
+            const SizedBox(height: 30),
+
+            // Display GIF based on rain status
+            if (isRaining != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 30),
+                child: Image.asset(
+                  isRaining!
+                      ? 'assets/images/storm.gif'
+                      : 'assets/images/sun.gif',
+                  height: 150,
+                ),
+              )
+            else
+              const Text("Loading weather status..."),
           ],
         ),
       ),
@@ -265,6 +232,36 @@ class _MyHomePageState extends State<MyHomePage> {
           '© 2025 Clothesline App - All rights reserved.',
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.black87, fontSize: 14),
+        ),
+      ),
+    );
+  }
+
+  // Helper function to build buttons
+  Widget buildButton(
+    String label,
+    IconData icon,
+    bool isActive,
+    VoidCallback onPressed,
+    bool isEnabled,
+  ) {
+    const double buttonWidth = 220;
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      child: SizedBox(
+        width: buttonWidth,
+        child: ElevatedButton.icon(
+          onPressed: isEnabled ? onPressed : null,
+          icon: Icon(icon, color: Colors.white),
+          label: Text(
+            label,
+            style: const TextStyle(color: Colors.black87),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isActive
+                ? Colors.greenAccent
+                : const Color.fromARGB(255, 0, 217, 255),
+          ),
         ),
       ),
     );
