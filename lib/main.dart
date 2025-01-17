@@ -7,7 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Initialize Firebase first
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -77,9 +77,14 @@ class _MyHomePageState extends State<MyHomePage> {
         isRaining = rainStatus;
       });
 
-      if (rainStatus == true) {
-        showNotification('It\'s Raining!', 'Please retract your clothesline.');
-      }
+      mode == "Manual"
+          ? showNotification(
+              isRaining! ? "It's Raining!" : "It's Sunny!",
+              isRaining!
+                  ? "Please retract your clothesline."
+                  : "Please expose your clothesline.")
+          : showNotification(isRaining! ? "It's Raining!" : "It's Sunny!",
+              isRaining! ? "Clothesline Retracting." : "Clothesline Exposing.");
     });
   }
 
