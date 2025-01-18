@@ -1,14 +1,13 @@
 {
   "project_info": {
-    "project_number": "943173826236",
-    "firebase_url": "https://clothesline-51b5b-default-rtdb.firebaseio.com",
-    "project_id": "clothesline-51b5b",
-    "storage_bucket": "clothesline-51b5b.firebasestorage.app"
+    "project_number": "734409980128",
+    "project_id": "clothesline-994cf",
+    "storage_bucket": "clothesline-994cf.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:943173826236:android:42e679b35a57cdf1c282b9",
+        "mobilesdk_app_id": "1:734409980128:android:fbc3837e3acee91621b885",
         "android_client_info": {
           "package_name": "com.example.clothesline"
         }
@@ -16,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyA-pi22BKRuLsQJvXFC3BntSwWdJSBvQCM"
+          "current_key": "AIzaSyBYMWrbUh6NpH9xgjJHgfJiiuyzV8EKubk"
         }
       ],
       "services": {
